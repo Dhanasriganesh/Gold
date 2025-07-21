@@ -1,10 +1,14 @@
 import React from 'react'
+import Adminheader from './Adminheader';
 
 function Admintokens() {
   return (
-    <div>
-      
-    </div>
+    <>
+      <Adminheader />
+      <div>
+        {/* Page content here */}
+      </div>
+    </>
   )
 }
 

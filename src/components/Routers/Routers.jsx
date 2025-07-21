@@ -12,9 +12,15 @@ import Purchases from '../Dashboards/Employee/Purchases'
 import Sales from '../Dashboards/Employee/Sales'
 import Testreports from '../Dashboards/Employee/Testreports'
 import Login from '../Dashboards/Login/Login'
+import Admindashboard from '../Dashboards/Admin/Admindashboard'
+import Employeedashboard from '../Dashboards/Employee/Employeedashboard'
 function Routers() {
   return (
     <Routes>
+      <Route path='/admin' element={<Admindashboard/>}/>
+      <Route path='/employee' element={<Employeedashboard/>}/>
+
+
       <Route path='/' element={<Login/>}/>
       <Route path='/admin/file' element={<Adminfile/>}/>
       <Route path='/admin/tokens' element={<Admintokens/>}/>
@@ -24,7 +30,7 @@ function Routers() {
 
 
 
-
+      <Route path='/employee/sales' element={<Sales/>}/>
       <Route path='/employee/tokens' element={<Emptokens/>}/>
       <Route path='/employee/exchanges' element={<Exchanges/>}/>
       <Route path='/employee/purchases' element={<Purchases/>}/>

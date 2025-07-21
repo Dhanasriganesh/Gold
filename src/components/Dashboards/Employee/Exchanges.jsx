@@ -1,10 +1,14 @@
 import React from 'react'
+import Employeeheader from './Employeeheader';
 
 function Exchanges() {
   return (
-    <div>
-      
-    </div>
+    <>
+      <Employeeheader />
+      <div>
+        {/* Page content here */}
+      </div>
+    </>
   )
 }
 
