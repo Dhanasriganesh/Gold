@@ -1,0 +1,38 @@
+import React from 'react'
+import {Routes, Route} from 'react-router-dom'
+import Adminfile from '../Dashboards/Admin/Adminfile'
+import Admintokens from '../Dashboards/Admin/Admintokens'
+import Reports from '../Dashboards/Admin/Reports'
+import Silverreserves from '../Dashboards/Admin/Silverreserves'
+import Goldreservers from '../Dashboards/Admin/Goldreservers'
+import Emptokens from '../Dashboards/Employee/Emptokens'
+import Exchanges from '../Dashboards/Employee/Exchanges'
+import Ordermanage from '../Dashboards/Employee/Ordermanage'
+import Purchases from '../Dashboards/Employee/Purchases'
+import Sales from '../Dashboards/Employee/Sales'
+import Testreports from '../Dashboards/Employee/Testreports'
+import Login from '../Dashboards/Login/Login'
+function Routers() {
+  return (
+    <Routes>
+      <Route path='/' element={<Login/>}/>
+      <Route path='/admin/file' element={<Adminfile/>}/>
+      <Route path='/admin/tokens' element={<Admintokens/>}/>
+      <Route path='/admin/reports' element={<Reports/>}/>
+      <Route path='/admin/silver-reserves' element={<Silverreserves/>}/>
+      <Route path='/admin/gold-reserves' element={<Goldreservers/>}/>
+
+
+
+
+      <Route path='/employee/tokens' element={<Emptokens/>}/>
+      <Route path='/employee/exchanges' element={<Exchanges/>}/>
+      <Route path='/employee/purchases' element={<Purchases/>}/>
+      <Route path='/employee/order-management' element={<Ordermanage/>}/>
+      <Route path='/employee/test-reports' element={<Testreports/>}/>
+    
+    </Routes>
+  )
+}
+
+export default Routers
