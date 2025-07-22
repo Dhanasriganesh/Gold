@@ -3,6 +3,8 @@ import Adminheader from './Adminheader';
 import { db } from '../../../firebase';
 import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle, AlertCircle, Loader2, User, FileText, Edit, IndianRupee } from 'lucide-react';
+import { useStore } from './StoreContext';
+import { useNavigate } from 'react-router-dom';
 
 function Admintokens() {
   const [form, setForm] = useState({ name: '', purpose: 'GTS', amount: '' });
@@ -13,14 +15,24 @@ function Admintokens() {
 
   // Get the next token number on mount or after submission
   const [tokenNo, setTokenNo] = useState('');
+  const { selectedStore } = useStore();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!selectedStore) navigate('/admin');
+  }, [selectedStore, navigate]);
+
   useEffect(() => {
     const fetchTokenCount = async () => {
-      const snapshot = await getDocs(collection(db, 'tokens'));
-      const nextNum = snapshot.size + 1;
+      if (!selectedStore) return;
+      const tokensRef = collection(db, 'tokens');
+      const snapshot = await getDocs(tokensRef);
+      // Count only tokens for the selected store
+      const storeTokens = snapshot.docs.filter(doc => doc.data().storeId === selectedStore.id);
+      const nextNum = storeTokens.length + 1;
       setTokenNo(`Tk-${String(nextNum).padStart(2, '0')}`);
     };
     fetchTokenCount();
-  }, [preview]);
+  }, [preview, selectedStore]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,9 +48,11 @@ function Admintokens() {
     }
     setLoading(true);
     try {
-      // Get the next token number
-      const snapshot = await getDocs(collection(db, 'tokens'));
-      const nextNum = snapshot.size + 1;
+      // Get the next token number for this store only
+      const tokensRef = collection(db, 'tokens');
+      const snapshot = await getDocs(tokensRef);
+      const storeTokens = snapshot.docs.filter(doc => doc.data().storeId === selectedStore.id);
+      const nextNum = storeTokens.length + 1;
       const tokenNumber = `Tk-${String(nextNum).padStart(2, '0')}`;
       const today = new Date();
       const dateStr = today.toLocaleDateString('en-GB');
@@ -49,6 +63,8 @@ function Admintokens() {
         amount: form.amount,
         tokenNo: tokenNumber,
         date: dateStr,
+        storeId: selectedStore?.id,
+        storeName: selectedStore?.name,
         createdAt: serverTimestamp(),
       });
       setPreview({ ...form, purpose: form.purpose === 'CUSTOM' ? customPurpose : form.purpose, tokenNo: tokenNumber, date: dateStr });
@@ -87,6 +103,7 @@ function Admintokens() {
       <Adminheader />
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-200 py-8 px-2">
         <div className="w-full max-w-2xl flex flex-col md:flex-row gap-8 items-start">
+          <div className="w-full text-center mb-4 text-lg font-semibold text-yellow-700">{selectedStore ? `Store: ${selectedStore.name}` : ''}</div>
           {/* Form Card */}
           <form onSubmit={handleSubmit} className="flex-1 bg-white/90 rounded-2xl shadow-xl p-8 space-y-6 border border-yellow-100">
             <h2 className="text-xl font-bold text-yellow-700 mb-2 flex items-center gap-2"><FileText className="w-5 h-5" /> Generate Token</h2>

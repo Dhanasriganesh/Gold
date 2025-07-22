@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Adminheader from './Adminheader';
 import { db } from '../../../firebase';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { useStore } from './StoreContext';
+import { useNavigate } from 'react-router-dom';
 
 function Goldreservers() {
   const [reserveType, setReserveType] = useState('LOCAL GOLD');
@@ -11,14 +13,24 @@ function Goldreservers() {
   const [pendingAdd, setPendingAdd] = useState(0);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  const { selectedStore } = useStore();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!selectedStore) navigate('/admin');
+  }, [selectedStore, navigate]);
+
   // Fetch available gold for selected type
   useEffect(() => {
     const fetchAvailable = async () => {
-      const q = query(collection(db, 'goldreserves'), where('type', '==', reserveType));
+      if (!selectedStore) return;
+      const q = query(
+        collection(db, 'goldreserves'),
+        where('type', '==', reserveType),
+        where('storeId', '==', selectedStore.id)
+      );
       const snapshot = await getDocs(q);
       let latestTotal = 0;
       let latestAvailable = 0;
-      // Find the latest entry for this type
       snapshot.forEach(doc => {
         const data = doc.data();
         if (typeof data.totalingms === 'number') {
@@ -32,7 +44,7 @@ function Goldreservers() {
       setTotal(latestTotal);
     };
     fetchAvailable();
-  }, [reserveType, toast]);
+  }, [reserveType, toast, selectedStore]);
 
   // Update total only when add button is clicked
   useEffect(() => {
@@ -54,13 +66,41 @@ function Goldreservers() {
       return;
     }
     try {
-      await addDoc(collection(db, 'goldreserves'), {
-        type: reserveType,
-        availableingms: available,
-        addedingms: Number(pendingAdd),
-        totalingms: available + Number(pendingAdd),
-        createdAt: serverTimestamp(),
-      });
+      // Unique doc id: storeId-type
+      const docId = `${selectedStore.id}-${reserveType}`;
+      const docRef = doc(db, 'goldreserves', docId);
+      // Try to get the existing doc
+      const q = query(
+        collection(db, 'goldreserves'),
+        where('type', '==', reserveType),
+        where('storeId', '==', selectedStore.id)
+      );
+      const snapshot = await getDocs(q);
+      let newAvailable = available;
+      let newTotal = available + Number(pendingAdd);
+      if (!snapshot.empty) {
+        // Update existing
+        await setDoc(docRef, {
+          type: reserveType,
+          availableingms: newAvailable,
+          addedingms: Number(pendingAdd),
+          totalingms: newTotal,
+          storeId: selectedStore?.id,
+          storeName: selectedStore?.name,
+          createdAt: serverTimestamp(),
+        }, { merge: true });
+      } else {
+        // Create new
+        await setDoc(docRef, {
+          type: reserveType,
+          availableingms: 0,
+          addedingms: Number(pendingAdd),
+          totalingms: Number(pendingAdd),
+          storeId: selectedStore?.id,
+          storeName: selectedStore?.name,
+          createdAt: serverTimestamp(),
+        });
+      }
       setPendingAdd(0);
       setToast({ show: true, message: 'Gold reserve updated!', type: 'success' });
     } catch {
@@ -80,6 +120,7 @@ function Goldreservers() {
     <>
       <Adminheader />
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-200 py-8 px-2">
+        <div className="w-full text-center mb-4 text-lg font-semibold text-yellow-700">{selectedStore ? `Store: ${selectedStore.name}` : ''}</div>
         <div className="w-full max-w-lg bg-white/90 rounded-2xl shadow-xl p-8 border border-yellow-100">
           <h2 className="text-xl font-bold text-yellow-700 mb-6 text-center">Gold Reserves Management</h2>
           <div className="mb-4">
@@ -137,7 +178,7 @@ function Goldreservers() {
             <span>{toast.message}</span>
           </div>
         )}
-      </div>
+    </div>
     </>
   );
 }
